@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Water Level Monitor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Google Fonts for modern look -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <!-- FontAwesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
+  <style>
+    :root {
+      --primary: #1976d2;
+      --primary-dark: #1565c0;
+      --accent: #00bcd4;
+      --background: #e3f6fd;
+      --background-gradient: linear-gradient(135deg, #e0f7fa 0%, #b3e5fc 100%);
+      --card-bg: rgba(255, 255, 255, 0.98);
+      --shadow: 0 4px 28px 0 rgba(33,150,243,0.14), 0 2px 8px #00e5ff18;
+      --success-bg: #e3fceb;
+      --success-color: #00796b;
+      --alert-bg: #fff7e3;
+      --alert-color: #d84315;
+      --pulse-color: #90caf9;
+      --glass-blur: blur(7px);
+      --anim-duration: 0.7s;
+      --border-radius: 20px;
+      --navbar-height: 60px;
+    }
+    * { box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: 'Montserrat', 'Roboto', Arial, sans-serif;
+      background: var(--background-gradient);
+      color: #18516d;
+    }
+
+    body {
+      min-height: 100vh;
+      width: 100vw;
+      animation: fadeIn 1.2s;
+      margin: 0;
+      padding: 0;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(32px);}
+      to { opacity: 1; transform: none;}
+    }
+
+    .app-header {
+      width: 100vw;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1.3rem;
+      margin-top: 2.2rem;
+      margin-bottom: 1.2rem;
+      user-select: none;
+      animation: fadeIn 1.3s cubic-bezier(.2,1.2,.4,1);
+      background: transparent;
+      position: relative;
+    }
+    .rainbow-bg-header {
+    position: relative;
+    background: 
+      linear-gradient(90deg, 
+        #00c3ff 0%, 
+        #ffff1c 23%, 
+        #ff61a6 48%, 
+        #38ffb3 73%, 
+        #2196f3 100%);
+    background-size: 200% 100%;
+    animation: headerRainbowAnim 9s ease-in-out infinite alternate;
+    filter: blur(0px) brightness(1.13) opacity(0.8);
+    z-index: 0;
+    border-radius: 0 0 40% 40% / 0 0 20% 20%;
+    pointer-events: none;
+    height: 120px;
+    width: 100vw;
+    left: 0;
+    top: 0;
+    box-shadow: 0 8px 40px #2196f366;
+    overflow: hidden;
+  }
+  @keyframes headerRainbowAnim {
+    0% {background-position: 0% 50%;}
+    100% {background-position: 100% 50%;}
+  }
+  /* Stack under header content */
+  .app-header {
+    position: relative;
+    z-index: 2;
+  }
+    .app-logo {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 45% 40%,#4dc3ff 65%,#1976d2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      color: #fff;
+      box-shadow: 0 3px 18px #00e5ff60;
+      margin-right: 0.5rem;
+      position: relative;
+      z-index: 2;
+    }
+    .app-title {
+      font-size: 2.25rem;
+      font-weight: 800;
+      color: #1769aa;
+      letter-spacing: 2px;
+      text-shadow: 0 2px 25px #00e5ff14, 0 1px 0 #4dd0e110;
+      font-family: 'Montserrat', 'Roboto', Arial, sans-serif;
+      z-index: 2;
+    }
+
+    /* Decorative corner */
+    .corner-svg {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    nav.navbar {
+      width: 100vw;
+      height: var(--navbar-height);
+      background: #fff;
+      box-shadow: 0 4px 16px #00bcd415, 0 1.5px 6px #b3e5fc30;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 0;
+      margin: 0 0 1.5rem 0;
+      border-bottom: 2px solid #b3e5fc55;
+      font-family: 'Montserrat', 'Roboto', Arial, sans-serif;
+      background: linear-gradient(90deg, #e0f7fa 55%, #b3e5fc 100%);
+    }
+    .nav-content {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 2.5rem;
+      margin: 0 1.5rem;
+    }
+    .nav-link {
+      text-decoration: none;
+      color: #1976d2;
+      font-weight: 700;
+      font-size: 1.1rem;
+      padding: 0.5rem 1.2rem;
+      border-radius: 10px 10px 0 0;
+      transition: background 0.18s, color 0.18s;
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+      border-bottom: 3px solid transparent;
+    }
+    .nav-link.active, .nav-link:hover, .nav-link:focus {
+      background: #b3e5fc44;
+      color: #1565c0;
+      border-bottom: 3px solid #00bcd4;
+    }
+
+    .page {
+      display: none;
+      width: 100%;
+      min-height: 70vh;
+      justify-content: center;
+      align-items: flex-start;
+      flex-direction: column;
+      margin: 0 auto 2rem auto;
+      max-width: 1400px;
+      transition: opacity .3s;
+      opacity: 0;
+      padding: 0;
+    }
+    .page.active {
+      display: flex;
+      opacity: 1;
+      animation: fadeIn .7s;
+    }
+
+    .dashboard {
+      display: flex;
+      gap: 2rem;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+      width: 100%;
+      max-width: 1400px;
+      margin: 0 auto;
+      z-index: 2;
+    }
+
+    .container {
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      padding: 2.3rem 2rem 1.9rem 2rem;
+      min-width: 315px;
+      width: 100%;
+      max-width: 370px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      animation: popIn var(--anim-duration);
+      transition: box-shadow 0.3s, background 0.35s;
+      backdrop-filter: var(--glass-blur);
+      border: 2px solid #b3e5fc70;
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+    }
+    .container:before {
+      content: "";
+      position: absolute;
+      background: radial-gradient(circle at 60% 40%,#b3e5fc44 50%,transparent 100%);
+      width: 170%;
+      height: 170%;
+      left: -40%;
+      top: -50%;
+      z-index: 0;
+    }
+    .container:hover {
+      box-shadow: 0 8px 48px 0 #4fc3f733,0 2px 6px #00e5ff10;
+      background: #fafdff;
+    }
+    @keyframes popIn {
+      from { transform: scale(0.85); opacity: 0;}
+      to { transform: scale(1); opacity: 1;}
+    }
+    .title {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #1976d2;
+      margin-bottom: 1.3rem;
+      letter-spacing: 1.5px;
+      z-index: 1;
+      text-shadow: 0 2px 14px #00e5ff30, 0 1px 0 #b3e5fc70;
+      font-family: 'Montserrat',Arial,sans-serif;
+      display: flex;
+      align-items: center;
+      gap: 0.4em;
+    }
+   
+    .distance-group {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.6rem;
+      gap: 0.4rem;
+      position: relative;
+      z-index: 1;
+    }
+    .distance-value {
+      font-size: 3.3rem;
+      font-weight: 900;
+      color: var(--primary);
+      margin: 0;
+      letter-spacing: 2px;
+      text-shadow: 0 3px 20px #90caf980,0 2px 0 #b3e5fc;
+      animation: popNum 0.5s;
+      user-select: none;
+    }
+    @keyframes popNum {
+      0% { transform: scale(1);}
+      30% { transform: scale(1.12);}
+      100% { transform: scale(1);}
+    }
+    .distance-pulse {
+      position: absolute;
+      left: 54%;
+      top: 54%;
+      transform: translate(-50%, -50%);
+      z-index: 0;
+      pointer-events: none;
+      width: 110px;
+      height: 55px;
+      background: var(--pulse-color);
+      opacity: 0.21;
+      border-radius: 50% 50% 60% 50% / 65% 72% 60% 48%;
+      filter: blur(15px);
+      animation: pulseAnim 1.13s infinite;
+    }
+    @keyframes pulseAnim {
+      0% { opacity: 0.21; transform: translate(-50%, -50%) scale(1);}
+      70% { opacity: 0.07; transform: translate(-50%, -50%) scale(1.13);}
+      100% { opacity: 0.21; transform: translate(-50%, -50%) scale(1);}
+    }
+    .unit {
+      font-size: 1.2rem;
+      color: #6ec6ff;
+      margin-left: 0.2rem;
+      font-weight: 700;
+      position: relative;
+      z-index: 2;
+      filter: brightness(1.2);
+      text-shadow: 0 1px 10px #90caf950;
+    }
+    .status {
+      padding: 0.55rem 1.2rem;
+      border-radius: 9px;
+      font-weight: 800;
+      margin-bottom: 1.1rem;
+      margin-top: 0.6rem;
+      font-size: 1.1rem;
+      letter-spacing: 1px;
+      transition: background 0.28s, color 0.28s;
+      box-shadow: 0 1px 7px #b3e5fc55;
+      border: 1.2px solid #b3e5fc44;
+      z-index: 2;
+      text-align: center;
+      filter: brightness(1.15);
+    }
+    .status.safe {
+      background: var(--success-bg);
+      color: var(--success-color);
+      animation: statusSafe 0.6s;
+    }
+    .status.alert {
+      background: var(--alert-bg);
+      color: var(--alert-color);
+      animation: statusAlert 0.7s;
+    }
+    @keyframes statusSafe {
+      0% { background: #f2fff8; color: #26a69a;}
+      100% { background: var(--success-bg); color: var(--success-color);}
+    }
+    @keyframes statusAlert {
+      0% { background: #fffde7; color: #d84315;}
+      100% { background: var(--alert-bg); color: var(--alert-color);}
+    }
+    .last-update {
+      color: #0097a7;
+      font-size: 1.03rem;
+      margin-top: 1.2rem;
+      margin-bottom: 0.5rem;
+      font-style: italic;
+      opacity: 0.95;
+      letter-spacing: 0.2px;
+      transition: color 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.4em;
+      justify-content: center;
+      z-index: 2;
+      text-shadow: 0 1px 7px #b3e5fc21;
+    }
+    .last-update .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #81d4fa;
+      display: inline-block;
+      animation: heartbeat 1.4s infinite;
+      box-shadow: 0 0 8px #b3e5fc61;
+    }
+    @keyframes heartbeat {
+      0%, 100% { background: #81d4fa; }
+      50% { background: #00bcd4; }
+    }
+    /* Status badge */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      font-weight: 700;
+      border-radius: 18px;
+      padding: 0.3em 1em;
+      font-size: 1.05em;
+      box-shadow: 0 1px 8px #b3e5fc55;
+      margin-right: 8px;
+      gap: 0.5em;
+      margin-bottom: 0.7em;
+    }
+    .status-badge.water {
+      background: linear-gradient(90deg,#b2ebf2,#4fc3f7);
+      color: #1976d2;
+      animation: pulse 1.7s infinite alternate;
+    }
+    .status-badge.alert {
+      background: linear-gradient(90deg,#fff7e3,#ffe082);
+      color: #d84315;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 8px #b3e5fc55;}
+      100% { box-shadow: 0 0 22px #4fc3f7aa;}
+    }
+    button {
+      background: linear-gradient(90deg,#00bcd4 20%,#4fc3f7 100%);
+      color: #fff;
+      border: none;
+      border-radius: 11px;
+      padding: 0.7rem 1.8rem;
+      font-size: 1.07rem;
+      cursor: pointer;
+      margin-top: 1.2rem;
+      margin-bottom: 0.5rem;
+      transition: background 0.2s, transform 0.12s;
+      font-weight: 700;
+      box-shadow: 0 2px 6px #4fc3f766;
+      letter-spacing: 1px;
+      z-index: 2;
+      outline: none;
+    }
+    button:active {
+      background: var(--primary-dark);
+      transform: scale(0.97);
+    }
+    button:hover, button:focus {
+      background: linear-gradient(90deg,#4fc3f7 10%,#00bcd4 100%);
+      transform: translateY(-2px) scale(1.04);
+      box-shadow: 0 4px 16px #4fc3f722;
+    }
+    .frame-block {
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      padding: 1.5rem 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 320px;
+      max-width: 470px;
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+      border: 2px solid #b3e5fc44;
+      backdrop-filter: var(--glass-blur);
+    }
+    .frame-block:before {
+      content: "";
+      position: absolute;
+      background: radial-gradient(circle at 80% 60%,#b3e5fc55 55%,transparent 100%);
+      width: 150%;
+      height: 150%;
+      left: -30%;
+      top: -40%;
+      z-index: 0;
+    }
+    .frame-block iframe {
+      border-radius: 13px;
+      border: 1.3px solid #b3e5fc;
+      box-shadow: 0 2px 8px #b3e5fc33;
+      background: #fafbff;
+      min-width: 220px;
+      transition: border 0.3s;
+      z-index: 1;
+    }
+    .info-row {
+      font-size: 1.01rem;
+      color: #0288d1;
+      margin: 0.5rem 0 0.13rem 0;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      opacity: 0.93;
+      display: flex;
+      align-items: center;
+      gap: 0.4em;
+      justify-content: center;
+      z-index: 2;
+      text-shadow: 0 1px 6px #b3e5fc21;
+    }
+    .info-row .icon {
+      font-size: 1em;
+      vertical-align: middle;
+    }
+    /* Calendar styles */
+    .calendar-block {
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      padding: 1.3rem 0.7rem 1.1rem 0.7rem;
+      min-width: 340px;
+      max-width: 650px;
+      width: 100%;
+      margin: 0.8rem auto 1.5rem auto;
+      position: relative;
+      border: 2px solid #b3e5fc44;
+      backdrop-filter: var(--glass-blur);
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      animation: fadeIn 1.2s;
+      overflow-x: auto;
+      overflow-y: visible;
+      transition: box-shadow .3s;
+    }
+    .calendar-block:before {
+      content: "";
+      position: absolute;
+      background: radial-gradient(circle at 65% 60%,#b3e5fc33 60%,transparent 100%);
+      width: 150%;
+      height: 150%;
+      left: -30%;
+      top: -40%;
+      z-index: 0;
+    }
+    .calendar-title {
+      font-weight: 800;
+      font-size: 1.24rem;
+      color: #0288d1;
+      text-shadow: 0 2px 10px #90caf930;
+      margin-bottom: 0.7rem;
+      margin-top: 0.2em;
+      z-index: 2;
+      letter-spacing: 1px;
+    }
+    .calendar-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      margin-bottom: 0.7rem;
+      z-index: 1;
+    }
+    .calendar-controls button {
+      padding: 0.2rem 0.7rem;
+      font-size: 1rem;
+      border-radius: 6px;
+      background: #e1f5fe;
+      color: #0288d1;
+      box-shadow: none;
+      border: 1px solid #b3e5fc99;
+      font-weight: 700;
+      transition: background 0.2s, color 0.2s;
+    }
+    .calendar-controls button:hover {
+      background: #0288d1;
+      color: #fff;
+    }
+    .calendar-table-wrapper {
+      width: 100%;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 0.4em;
+    }
+    .calendar-table {
+      margin: 0 auto;
+      width: max-content;
+      min-width: 420px;
+      border-collapse: collapse;
+      background: transparent;
+      font-size: 1.02rem;
+      z-index: 2;
+    }
+    .calendar-table th, .calendar-table td {
+      padding: 0.38em 0.95em;
+      text-align: center;
+      border-radius: 7px;
+      background: transparent;
+      min-width: 40px;
+      font-weight: 600;
+      font-family: 'Roboto', Arial, sans-serif;
+      transition: background 0.2s;
+      cursor: pointer;
+      position: relative;
+    }
+    .calendar-table th {
+      color: #0288d1;
+      font-weight: 800;
+      background: transparent;
+      border-bottom: 2px solid #b3e5fc2a;
+      font-size: 1.05rem;
+    }
+    .calendar-table td.today {
+      background: linear-gradient(135deg,#b2ebf288 60%,#4fc3f7 100%);
+      color: #1565c0;
+      font-weight: 900;
+      border: 2px solid #4fc3f7;
+      box-shadow: 0 1px 10px #4fc3f766;
+      filter: brightness(1.11);
+    }
+    .calendar-table td.has-data {
+      background: linear-gradient(120deg,#4fc3f7 70%,#1976d2 100%);
+      color: #fff;
+      font-weight: 900;
+      border: 1.5px solid #90caf980;
+      filter: brightness(1.13);
+      box-shadow: 0 1px 8px #4fc3f733;
+    }
+    .calendar-table td.has-data .calendar-level-popup {
+      display: none;
+      position: absolute;
+      left: 50%; top: 0;
+      transform: translate(-50%,-110%);
+      background: #fafdff;
+      color: #0288d1;
+      border-radius: 10px;
+      padding: 0.38em 1em;
+      font-size: 1.01em;
+      z-index: 10;
+      box-shadow: 0 2px 16px #4fc3f780;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.16s;
+      white-space: nowrap;
+      font-weight: 700;
+      border: 1.2px solid #b3e5fc55;
+    }
+    .calendar-table td.has-data:focus .calendar-level-popup,
+    .calendar-table td.has-data:hover .calendar-level-popup {
+      display: block;
+      opacity: 1;
+    }
+    .calendar-table td.has-data:active {
+      background: linear-gradient(135deg,#1976d2 80%,#4fc3f7 100%);
+      color: #fff;
+      outline: 2px solid #0288d1;
+    }
+    .calendar-table td:hover:not(.empty):not(.has-data) {
+      background: #b3e5fc;
+      color: #0288d1;
+    }
+    .calendar-table td.empty { background: transparent; cursor: default; }
+    .calendar-legend {
+      font-size: 0.95rem;
+      color: #0288d1;
+      margin: 0.25em 0 0.1em 0;
+      text-align: right;
+      width: 100%;
+      opacity: 0.82;
+      z-index: 2;
+    }
+    /* Dashboard icon row */
+    .icon-row {
+      display:flex;
+      gap:1.2em;
+      justify-content:center;
+      align-items:center;
+      font-size:2rem;
+      margin-top:2em;
+      margin-bottom: 1em;
+    }
+    /* Decorative divider */
+    .divider {
+      width:100%;
+      margin:2em 0 1em 0;
+    }
+    /* Responsive Design */
+    @media (max-width: 1230px) {
+      .dashboard {
+        flex-wrap: wrap;
+        min-width: 0;
+        gap: 1.1rem;
+      }
+    }
+    @media (max-width: 900px) {
+      .dashboard {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 1.1rem;
+        min-width: 0;
+      }
+    }
+    @media (max-width: 800px) {
+      .container, .frame-block, .calendar-block {
+        max-width: 99vw;
+        min-width: 0;
+        padding: 1.1rem 0.6rem;
+      }
+      .dashboard {
+        gap: 1.2rem;
+        min-width: 0;
+      }
+      .app-header { margin-top: 1.1rem; }
+    }
+    @media (max-width: 650px) {
+      .dashboard {
+        gap: 0.7rem;
+      }
+      .container, .frame-block, .calendar-block {
+        padding: 0.8rem 0.2rem 1.1rem 0.2rem;
+      }
+      .frame-block iframe, .frame-block {
+        min-width: 0;
+        width: 99vw;
+        max-width: 99vw;
+      }
+      .calendar-block {
+        min-width: 0;
+        max-width: 99vw;
+        padding: 0.8rem 0.1rem 1rem 0.1rem;
+      }
+      .calendar-table th, .calendar-table td {
+        min-width: 20px;
+        font-size: 0.88rem;
+      }
+      .dashboard { gap: 0.5rem; }
+      .app-header .app-title { font-size: 1.2rem;}
+      .app-header { margin-top: .5rem; }
+    }
+    @media (max-width: 520px) {
+      .calendar-table th, .calendar-table td {
+        padding: 0.2em 0.2em;
+        min-width: 15px;
+        font-size: 0.78rem;
+      }
+      
+    }
+  </style>
+</head>
+<body>
+  <div class="rainbow-bg-header"></div>
+  <!-- Header with logo -->
+  <div class="app-header">
+    <div class="app-logo">
+      <i class="fa-solid fa-water"></i>
+      <!-- Animated drop for extra decoration -->
+      <span class="waterdrop-anim"></span>
+    </div>
+    <div class="app-title">Water Level Monitor</div>
+    <!-- Decorative SVG in the header corner -->
+    <span class="corner-svg">
+      <svg width="60" height="60" viewBox="0 0 60 60">
+        <path d="M0,0 Q50,10 60,60 L60,0 Z" fill="#b3e5fc" opacity="0.2"/>
+        <path d="M0,0 Q50,15 60,50" stroke="#29b6f6" stroke-width="3" fill="none"/>
+      </svg>
+    </span>
+  </div>
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="nav-content">
+      <a href="#" id="nav-dashboard" class="nav-link active"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+      <a href="#" id="nav-calendar" class="nav-link"><i class="fa-solid fa-calendar-days"></i> Calendar</a>
+    </div>
+  </nav>
+  <!-- Dashboard Page -->
+  <div class="page active" id="page-dashboard">
+    <div class="dashboard">
+      <div class="container" id="mainCard">
+        <div class="title">
+          <span class="waterdrop-anim"></span>
+          Water Level
+        </div>
+        <div style="margin-bottom:.8em;">
+          <!-- Status badges -->
+          <span class="status-badge water">
+            <i class="fa-solid fa-tint"></i> Healthy
+          </span>
+          <span class="status-badge alert">
+            <i class="fa-solid fa-exclamation"></i> Low
+          </span>
+        </div>
+        <div class="distance-group" style="margin-bottom: 0.4rem;">
+          <span class="distance-pulse" id="distancePulse"></span>
+          <span class="distance-value" id="distanceValue">--</span>
+          <span class="unit">cm</span>
+        </div>
+        <div class="status" id="status">Loading...</div>
+        <div class="info-row" id="infoRow" style="display:none;">
+          <span class="icon"><i class="fa-solid fa-cloud-sun"></i></span>
+          <span id="extraInfo"></span>
+        </div>
+        <div class="last-update" id="lastUpdate"><span class="dot"></span> Last update: --</div>
+        <button onclick="fetchData()" id="refreshBtn"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
+        <!-- Decorative divider -->
+        <div class="divider">
+          <svg width="100%" height="18" viewBox="0 0 400 18" preserveAspectRatio="none">
+            <path d="M0,9 Q100,18 200,9 Q300,0 400,9" fill="none" stroke="#b3e5fc" stroke-width="3"/>
+          </svg>
+        </div>
+      </div>
+      <div class="frame-block">
+        <!-- Decorative wave SVG above chart -->
+        <svg width="60" height="30" viewBox="0 0 60 30" style="position:absolute;top:0;left:0;z-index:1;">
+          <path d="M0,20 Q10,30 20,20 T40,20 T60,20 V30 H0Z" fill="#b3e5fc"/>
+          <path d="M0,25 Q10,35 20,25 T40,25 T60,25" fill="none" stroke="#29b6f6" stroke-width="2"/>
+        </svg>
+        <iframe width="430" height="260" src="https://thingspeak.com/channels/2975918/charts/1?bgcolor=%23e3f6fd&color=%231976d2&dynamic=true&results=60&type=line&update=15" allowfullscreen title="Water Level Chart"></iframe>
+      </div>
+      <div class="frame-block">
+        <iframe width="450" height="260" style="border: 1px solid #1976d2;" src="https://thingspeak.com/channels/2975918/charts/2?bgcolor=%23e3f6fd&color=%2300bcd4&dynamic=true&results=60&type=line&update=15"></iframe>
+      </div>
+    </div>
+    <!-- Icon row and divider at the bottom -->
+    <div class="divider">
+      <svg width="100%" height="18" viewBox="0 0 400 18" preserveAspectRatio="none">
+        <path d="M0,9 Q100,18 200,9 Q300,0 400,9" fill="none" stroke="#b3e5fc" stroke-width="3"/>
+      </svg>
+    </div>
+    <div class="icon-row">
+      <i class="fa-solid fa-tint" style="color:#1976d2;"></i>
+      <i class="fa-solid fa-water" style="color:#00bcd4;"></i>
+      <i class="fa-solid fa-droplet" style="color:#00c853;"></i>
+      <i class="fa-solid fa-temperature-half" style="color:#ff7043;"></i>
+      <i class="fa-solid fa-cloud-showers-heavy" style="color:#29b6f6;"></i>
+    </div>
+  </div>
+  <!-- Calendar Page -->
+  <div class="page" id="page-calendar">
+    <div class="calendar-block" id="calendarBlock">
+      <div class="calendar-title"><i class="fa-solid fa-calendar-days"></i> Monthly Water Level Calendar</div>
+      <div class="calendar-controls">
+        <button onclick="changeMonth(-1)"><i class="fa-solid fa-chevron-left"></i> Prev</button>
+        <span id="calendarMonthYear"></span>
+        <button onclick="changeMonth(1)">Next <i class="fa-solid fa-chevron-right"></i></button>
+      </div>
+      <div class="calendar-table-wrapper">
+        <table class="calendar-table" id="calendarTable"></table>
+      </div>
+      <div class="calendar-legend">
+        <span style="color:#fff;background:linear-gradient(90deg,#1976d2 60%,#4fc3f7 100%);padding:1.5px 8px;border-radius:7px;font-weight:900;margin-right:8px;">●</span>
+        Day with data
+        <span style="color:#1976d2;background:linear-gradient(90deg,#b2ebf2 60%,#4fc3f7 100%);padding:1.5px 8px 1.5px 8px;border-radius:7px;font-weight:900;margin-left:18px;">●</span>
+        Today
+      </div>
+      <!-- Decorative divider -->
+      <div class="divider">
+        <svg width="100%" height="18" viewBox="0 0 400 18" preserveAspectRatio="none">
+          <path d="M0,9 Q100,18 200,9 Q300,0 400,9" fill="none" stroke="#b3e5fc" stroke-width="3"/>
+        </svg>
+      </div>
+      <!-- Decorative icon row -->
+      <div class="icon-row">
+        <i class="fa-solid fa-tint" style="color:#1976d2;"></i>
+        <i class="fa-solid fa-water" style="color:#00bcd4;"></i>
+        <i class="fa-solid fa-droplet" style="color:#00c853;"></i>
+        <i class="fa-solid fa-temperature-half" style="color:#ff7043;"></i>
+        <i class="fa-solid fa-cloud-showers-heavy" style="color:#29b6f6;"></i>
+      </div>
+    </div>
+  </div>
+  <script>
+    // ----- NAVIGATION --------
+    function setActivePage(page) {
+      document.getElementById('nav-dashboard').classList.remove('active');
+      document.getElementById('nav-calendar').classList.remove('active');
+      document.getElementById('page-dashboard').classList.remove('active');
+      document.getElementById('page-calendar').classList.remove('active');
+      if (page === 'dashboard') {
+        document.getElementById('nav-dashboard').classList.add('active');
+        document.getElementById('page-dashboard').classList.add('active');
+      } else {
+        document.getElementById('nav-calendar').classList.add('active');
+        document.getElementById('page-calendar').classList.add('active');
+      }
+    }
+    document.getElementById('nav-dashboard').addEventListener('click', function(e){
+      e.preventDefault(); setActivePage('dashboard');
+    });
+    document.getElementById('nav-calendar').addEventListener('click', function(e){
+      e.preventDefault(); setActivePage('calendar'); setupCalendar();
+    });
+
+    // ----- DASHBOARD JS -----
+    const CHANNEL_ID = '2975918';
+    const READ_API_KEY = 'XKMIF118ZOJ39RU2';
+
+    function animateNumberPop() {
+      const elem = document.getElementById('distanceValue');
+      elem.style.animation = 'none';
+      void elem.offsetWidth;
+      elem.style.animation = null;
+    }
+    function animateStatus() {
+      const elem = document.getElementById('status');
+      elem.style.animation = 'none';
+      void elem.offsetWidth;
+      elem.style.animation = null;
+    }
+    function showInfoRow(msg = "") {
+      const row = document.getElementById('infoRow');
+      if (msg) {
+        row.style.display = '';
+        document.getElementById('extraInfo').textContent = msg;
+      } else {
+        row.style.display = 'none';
+      }
+    }
+    async function fetchData() {
+      let url = `https://api.thingspeak.com/channels/${CHANNEL_ID}/fields/1/last.json`;
+      if (READ_API_KEY && READ_API_KEY !== 'YOUR_READ_API_KEY') {
+        url += `?api_key=${READ_API_KEY}`;
+      }
+      const distanceValue = document.getElementById('distanceValue');
+      const statusElem = document.getElementById('status');
+      const pulse = document.getElementById('distancePulse');
+      const lastUpdate = document.getElementById('lastUpdate');
+      try {
+        statusElem.textContent = "Loading...";
+        statusElem.className = "status";
+        showInfoRow('');
+        pulse.style.background = "var(--pulse-color)";
+        pulse.style.animationPlayState = "running";
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) throw new Error("Failed to fetch");
+        const data = await res.json();
+        const distance = Number(data.field1);
+        distanceValue.textContent = isNaN(distance) ? '--' : distance.toFixed(2);
+        animateNumberPop();
+
+        if (isNaN(distance)) {
+          statusElem.textContent = "No Data";
+          statusElem.className = "status";
+          pulse.style.background = "#bdbdbd";
+          pulse.style.animationPlayState = "paused";
+          showInfoRow("Check sensor or connection.");
+        } else if (distance > 10.0) {
+          statusElem.textContent = "⚠️ ALERT: Water Level LOW";
+          statusElem.className = "status alert";
+          pulse.style.background = "#ffd7c2";
+          showInfoRow("Consider refilling the tank/reservoir soon.");
+        } else {
+          statusElem.textContent = "Water Level OK";
+          statusElem.className = "status safe";
+          pulse.style.background = "var(--pulse-color)";
+          showInfoRow("Level normal. System healthy.");
+        }
+        animateStatus();
+
+        const updated = new Date(data.created_at);
+        lastUpdate.innerHTML = `<span class="dot"></span> Last update: ${updated.toLocaleString()}`;
+      } catch (e) {
+        distanceValue.textContent = "--";
+        statusElem.textContent = "Error fetching data";
+        statusElem.className = "status alert";
+        pulse.style.background = "#ffd7c2";
+        pulse.style.animationPlayState = "paused";
+        lastUpdate.innerHTML = '<span class="dot"></span> Last update: --';
+        showInfoRow("Network/server error. Try again later.");
+      }
+    }
+    setInterval(fetchData, 20000);
+    window.onload = () => {
+      fetchData();
+      setupCalendar();
+    };
+
+    // ----- CALENDAR JS -----
+    let calendarDate = new Date();
+    function changeMonth(offset) {
+      calendarDate.setMonth(calendarDate.getMonth() + offset);
+      setupCalendar();
+    }
+    async function setupCalendar() {
+      const year = calendarDate.getFullYear();
+      const month = calendarDate.getMonth();
+      document.getElementById('calendarMonthYear').textContent =
+        `${calendarDate.toLocaleString('default', {month:'long'})} ${year}`;
+      const start = new Date(year, month, 1);
+      const end = new Date(year, month + 1, 0, 23, 59, 59, 999);
+      const startStr = start.toISOString();
+      const endStr = end.toISOString();
+      let url = `https://api.thingspeak.com/channels/${CHANNEL_ID}/fields/1.json?start=${encodeURIComponent(startStr)}&end=${encodeURIComponent(endStr)}&api_key=${READ_API_KEY}&results=8000`;
+      let results = [];
+      try {
+        const res = await fetch(url, { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.feeds) results = data.feeds;
+        }
+      } catch(e){}
+      const dataByDate = {};
+      results.forEach(entry => {
+        if (entry.created_at && entry.field1) {
+          const d = new Date(entry.created_at);
+          const ds = d.toISOString().slice(0,10);
+          if (!dataByDate[ds]) dataByDate[ds] = [];
+          dataByDate[ds].push(Number(entry.field1));
+        }
+      });
+      const table = document.getElementById('calendarTable');
+      table.innerHTML = '';
+      const weekdays = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      let tr = document.createElement('tr');
+      weekdays.forEach(day=>{
+        const th = document.createElement('th');
+        th.textContent = day;
+        tr.appendChild(th);
+      });
+      table.appendChild(tr);
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = end.getDate();
+      let row = document.createElement('tr');
+      let col = 0;
+      for(let i=0;i<firstDay;i++){
+        const td = document.createElement('td');
+        td.className = 'empty';
+        row.appendChild(td);
+        col++;
+      }
+      for(let date=1;date<=daysInMonth;date++){
+        if (col > 6) { table.appendChild(row); row = document.createElement('tr'); col = 0; }
+        const td = document.createElement('td');
+        const cellDate = new Date(year, month, date);
+        const today = new Date();
+        const dateStr = cellDate.toISOString().slice(0,10);
+        let hasData = !!dataByDate[dateStr] && dataByDate[dateStr].length > 0;
+        if (
+          cellDate.getFullYear() === today.getFullYear() &&
+          cellDate.getMonth() === today.getMonth() &&
+          cellDate.getDate() === today.getDate()
+        ) {
+          td.classList.add('today');
+        }
+        if (hasData) {
+          td.classList.add('has-data');
+          const values = dataByDate[dateStr];
+          const min = Math.min(...values);
+          const max = Math.max(...values);
+          const avg = values.reduce((a,b)=>a+b,0) / values.length;
+          td.innerHTML = `${date}
+            <span class="calendar-level-popup">
+              <b>${dateStr}</b><br>
+              <span style="color:#1976d2">Avg:</span> ${avg.toFixed(1)} cm<br>
+              <span style="color:#388e3c">Min:</span> ${min.toFixed(1)} cm<br>
+              <span style="color:#d84315">Max:</span> ${max.toFixed(1)} cm
+              <br>
+              <canvas width="56" height="18" style="margin-top:2px;background:#e3f6fd;border-radius:5px;" id="sparkline${dateStr.replace(/-/g,'')}"></canvas>
+            </span>
+          `;
+          setTimeout(()=>{
+            const cvs = document.getElementById('sparkline'+dateStr.replace(/-/g,''));
+            if (!cvs) return;
+            const ctx = cvs.getContext('2d');
+            const sparkVals = values.slice(-20);
+            const minV = Math.min(...sparkVals);
+            const maxV = Math.max(...sparkVals);
+            const range = maxV-minV||1;
+            ctx.strokeStyle = "#1976d2";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for(let i=0;i<sparkVals.length;i++){
+              let x = i*(cvs.width/(sparkVals.length-1));
+              let y = cvs.height - ((sparkVals[i]-minV)/range)*cvs.height;
+              if(i==0) ctx.moveTo(x,y);
+              else ctx.lineTo(x,y);
+            }
+            ctx.stroke();
+            ctx.fillStyle = "#90caf9";
+            for(let i=0;i<sparkVals.length;i++){
+              let x = i*(cvs.width/(sparkVals.length-1));
+              let y = cvs.height - ((sparkVals[i]-minV)/range)*cvs.height;
+              ctx.beginPath();ctx.arc(x,y,1.5,0,2*Math.PI);ctx.fill();
+            }
+          },0);
+        } else {
+          td.textContent = date;
+        }
+        td.setAttribute('tabindex',0);
+        row.appendChild(td);
+        col++;
+      }
+      while(col<=6){
+        const td = document.createElement('td');
+        td.className = 'empty';
+        row.appendChild(td);
+        col++;
+      }
+      table.appendChild(row);
+    }
+  </script>
+</body>
+</html>
